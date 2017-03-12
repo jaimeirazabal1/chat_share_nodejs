@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+html(lang="en")
+head
+	meta(charset="UTF-8")
+	meta(http-equiv="X-UA-Compatible",content="IE=edge")
+	meta(name="viewport", content="width=device-width, initial-scale=1")
+	title Shared image Live!
+	link(href="static/css/bootstrap.min.css",rel="stylesheet")
+	script(src="https://code.jquery.com/jquery-1.11.2.min.js")
+	script(src="/socket.io/socket.io.js")
+	style.
+		.mensajes{
+			background: #ddd;
+			border: 1px solid #333;
+			padding: .5em .1em;
+			height: 300px;
+			margin-bottom: 20px;
+			overflow:auto;
+		}
+		.mensajes p{
+			padding-left:10px;
+			padding-right:10px;
+			padding-top:5px;
+			padding-bottom:1px;
+		}
+		.mensajes p:hover{
+			background-color:#CFCFCF;
+			border-radius:10px;
+		}
+		img{
+			height:100px;
+		}
+	script.
+		var socket=io();
+
+		socket.on('addimage',function(msg,base64image){
+			var currentdate = new Date();
+			var datetime = currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+			$('.mensajes').append($('<p>').append($("<b>").text(msg+" ").append("<small class='pull-right'><span class='glyphicon glyphicon-time'></span>  "+datetime+"        </small>").append("<br>"),'<a target="_blank" href="'+base64image+'"><img src="'+base64image+'" class="img-rounded"/></a>'));
+			$(".mensajes").animate({ scrollTop: $('.mensajes').prop("scrollHeight")}, 1000);
+		});
+		socket.on('newmessage',function(user,msg){
+			var currentdate = new Date();
+			var datetime = currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+
+			$('.mensajes').append($("<p>").append($("<b>").text(user+": ").append("<small class='pull-right'><span class='glyphicon glyphicon-time'></span>  "+datetime+"        </small>").append("<br>"),$("<span>").text(msg)));
+			$(".mensajes").animate({ scrollTop: $('.mensajes').prop("scrollHeight")}, 1000);
+		});
+		$(function(){
+			$("#imagefile").on('change',function(e){
+				if($("#nombre").val()){
+
+					var file = e.originalEvent.target.files[0];
+					if(file){
+
+						var reader = new FileReader();
+
+						reader.onload = function(evt){
+						//enviaremos la imagen resultante
+							socket.emit('user image',{
+								user:$("#nombre").val(),
+								file:evt.target.result
+							});
+						}
+						reader.readAsDataURL(file);
+					}
+				}
+			});
+			$("#mensaje").keyup(function(e){
+				if(e.keyCode == 13){
+					$("#enviar").click();
+				}
+			})
+			$("#enviar").click(function(){
+				if($("#mensaje").val() && $("#nombre").val()){
+					socket.emit('new message',{user:$("#nombre").val(),message:$("#mensaje").val()});
+					$("#mensaje").val("");
+				}
+			});
+		});
+body
+	div.container
+		div.text-center
+			h2 Chat
+		div.mensajes
+		div.row
+			div.col-md-4
+				input(type="text",placeholder="Nombre..")#nombre.form-control
+			div.col-md-6
+				div.form-group
+					input(type="text",class="form-control",placeholder="Mensaje..")#mensaje
+			div.col-md-2
+				div.form-group
+					button(type="button",class="btn btn-success",onclick="$('#imagefile').click();return false;") Subir Archivo
+					input(type="file",style="display:none")#imagefile
+		button(type="button",class="btn btn-block btn-primary")#enviar Enviar Mensaje

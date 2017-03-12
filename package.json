@@ -1,0 +1,9 @@
+{
+  "name": "shared-img",
+  "version": "0.0.1",
+  "dependencies": {
+    "express": "*",
+    "jade": "*",
+    "socket.io": "^1.7.3"
+  }
+}
