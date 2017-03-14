@@ -27,11 +27,27 @@ head
 			background-color:#CFCFCF;
 			border-radius:10px;
 		}
+		#integrantes{
+			background: #ddd;
+			border: 1px solid #333;
+			padding: .5em .1em;
+			height: 300px;
+			margin-bottom: 20px;
+			overflow:auto;
+			font-size:10px;
+		}
+		#wrap{
+			margin:auto;
+			width:90%;
+		}
+		
 		img{
 			height:100px;
 		}
 	script.
 		var socket=io();
+		var id_ = ""; 
+		var nickname;
 
 		socket.on('addimage',function(msg,base64image){
 			var currentdate = new Date();
@@ -39,6 +55,7 @@ head
 			$('.mensajes').append($('<p>').append($("<b>").text(msg+" ").append("<small class='pull-right'><span class='glyphicon glyphicon-time'></span>  "+datetime+"        </small>").append("<br>"),'<a target="_blank" href="'+base64image+'"><img src="'+base64image+'" class="img-rounded"/></a>'));
 			$(".mensajes").animate({ scrollTop: $('.mensajes').prop("scrollHeight")}, 1000);
 		});
+		
 		socket.on('newmessage',function(user,msg){
 			var currentdate = new Date();
 			var datetime = currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
@@ -46,7 +63,46 @@ head
 			$('.mensajes').append($("<p>").append($("<b>").text(user+": ").append("<small class='pull-right'><span class='glyphicon glyphicon-time'></span>  "+datetime+"        </small>").append("<br>"),$("<span>").text(msg)));
 			$(".mensajes").animate({ scrollTop: $('.mensajes').prop("scrollHeight")}, 1000);
 		});
-		$(function(){
+		socket.on("refreshusers",function(objectarray){
+			console.log(objectarray)
+			list = "<ol class='user_list'>";
+			for(var i = 0; i < objectarray.length; i++){
+				if(objectarray[i]){
+					list +="<li id='"+objectarray[i].id+"'>"+objectarray[i].nickname+"</li>";
+				}
+			}
+			list += "</ol>";
+			$("#integrantes").html(list)
+		})
+		socket.on("disconnect",function(username){
+			socket.emit('new message',{user:"System",message:"Se desconectó "+username});
+		})
+		socket.on("write",function(letters){
+			$("#escribiendo").html("<small>"+letters+"</small>");
+		})
+		socket.on("writestop",function(letters){
+			setTimeout(function(){ $("#escribiendo").html("");}, 2000);
+			
+		})	
+		$(document).ready(function(){
+			socket.on("newid",function(id){
+				id_ = id;
+				console.log(id_)
+					nickname = prompt("Ingrese su nickname");
+				if(!nickname){
+					location.reload(1);
+				}else{
+					$("#nombre").val(nickname);
+					socket.emit('new user',{newuser:nickname,id:id_});
+					socket.emit('new message',{user:"System",message:"Se Conectó "+nickname});
+				}
+			});
+			$("#mensaje").keydown(function(){
+				socket.emit('writing',{id:id_});
+			});
+			$("#mensaje").keyup(function(){
+				socket.emit('writingstop',{id:id_});
+			});
 			$("#imagefile").on('change',function(e){
 				if($("#nombre").val()){
 
@@ -79,16 +135,24 @@ head
 			});
 		});
 body
-	div.container
-		div.text-center
-			h2 Chat
-		div.mensajes
+	div#wrap
 		div.row
-			div.col-md-4
-				input(type="text",placeholder="Nombre..")#nombre.form-control
-			div.col-md-6
+			div.col-md-10.col-xs-10.col-sm-10
+				div.text-center
+					small Chat
+				div.mensajes
+			div.col-md-2.col-xs-2.col-sm-2
+				div.text-center
+					small Integrantes
+				div#integrantes
+		div.row
+			div.col-md-12
+				div#escribiendo
+		div.row
+				input(type="text",placeholder="Nombre..")#nombre.form-control.hide
+			div.col-md-12
 				div.form-group
-					input(type="text",class="form-control",placeholder="Mensaje..")#mensaje
+					textarea(class="form-control",placeholder="Mensaje..")#mensaje
 			div.col-md-2
 				div.form-group
 					button(type="button",class="btn btn-success",onclick="$('#imagefile').click();return false;") Subir Archivo
