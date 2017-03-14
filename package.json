@@ -5,5 +5,10 @@
     "express": "*",
     "jade": "*",
     "socket.io": "^1.7.3"
-  }
+  },
+  "description": "Our sample Node to Heroku app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
 }
