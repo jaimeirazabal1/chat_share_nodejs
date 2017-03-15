@@ -1,5 +1,5 @@
 {
-  "name": "shared-img",
+  "name": "shared-img2",
   "version": "0.0.1",
   "dependencies": {
     "express": "*",
@@ -10,5 +10,5 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
-  },
+  }
 }
